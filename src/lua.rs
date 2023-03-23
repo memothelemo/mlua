@@ -69,6 +69,14 @@ use serde::Serialize;
 #[repr(transparent)]
 pub struct Lua(Arc<LuaInner>);
 
+// SAFETY: I'll not going to send a PR to @khvzak
+//
+// This is served as unsafe mlua crate but it
+// has some safe abstractions and besides it is
+// wrapped in Arc pointer.
+unsafe impl Send for Lua {}
+unsafe impl Sync for Lua {}
+
 impl Lua {
     #[inline(always)]
     pub(crate) fn state(&self) -> *mut ffi::lua_State {
