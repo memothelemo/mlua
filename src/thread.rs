@@ -46,7 +46,7 @@ pub enum ThreadStatus {
 
 /// Handle to an internal Lua thread (or coroutine).
 #[derive(Clone, Debug)]
-pub struct Thread<'lua>(pub(crate) LuaRef<'lua>);
+pub struct Thread(pub(crate) LuaRef);
 
 /// Thread (coroutine) representation as an async [`Future`] or [`Stream`].
 ///
@@ -56,14 +56,14 @@ pub struct Thread<'lua>(pub(crate) LuaRef<'lua>);
 /// [`Stream`]: futures_core::stream::Stream
 #[cfg(feature = "async")]
 #[cfg_attr(docsrs, doc(cfg(feature = "async")))]
-pub struct AsyncThread<'lua, R> {
-    thread: Thread<'lua>,
-    args0: Option<Result<MultiValue<'lua>>>,
+pub struct AsyncThread<R> {
+    thread: Thread,
+    args0: Option<Result<MultiValue>>,
     ret: PhantomData<R>,
     recycle: bool,
 }
 
-impl<'lua> Thread<'lua> {
+impl Thread {
     /// Resumes execution of this thread.
     ///
     /// Equivalent to `coroutine.resume`.
@@ -107,13 +107,13 @@ impl<'lua> Thread<'lua> {
     /// ```
     pub fn resume<A, R>(&self, args: A) -> Result<R>
     where
-        A: IntoLuaMulti<'lua>,
-        R: FromLuaMulti<'lua>,
+        A: IntoLuaMulti,
+        R: FromLuaMulti,
     {
-        let lua = self.0.lua;
+        let lua = self.0.lua.clone();
         let state = lua.state();
 
-        let mut args = args.into_lua_multi(lua)?;
+        let mut args = args.into_lua_multi(&lua)?;
         let nargs = args.len() as c_int;
         let results = unsafe {
             let _sg = StackGuard::new(state);
@@ -153,12 +153,12 @@ impl<'lua> Thread<'lua> {
             }
             results
         };
-        R::from_lua_multi(results, lua)
+        R::from_lua_multi(results, &lua)
     }
 
     /// Gets the status of the thread.
     pub fn status(&self) -> ThreadStatus {
-        let lua = self.0.lua;
+        let lua = self.0.lua.clone();
         unsafe {
             let thread_state = ffi::lua_tothread(lua.ref_thread(), self.0.index);
 
@@ -193,8 +193,8 @@ impl<'lua> Thread<'lua> {
         all(feature = "luajit", feature = "vendored"),
         feature = "luau",
     ))]
-    pub fn reset(&self, func: Function<'lua>) -> Result<()> {
-        let lua = self.0.lua;
+    pub fn reset(&self, func: Function) -> Result<()> {
+        let lua = self.0.lua.clone();
         let state = lua.state();
         unsafe {
             let _sg = StackGuard::new(state);
@@ -275,10 +275,10 @@ impl<'lua> Thread<'lua> {
     /// ```
     #[cfg(feature = "async")]
     #[cfg_attr(docsrs, doc(cfg(feature = "async")))]
-    pub fn into_async<A, R>(self, args: A) -> AsyncThread<'lua, R>
+    pub fn into_async<A, R>(self, args: A) -> AsyncThread<R>
     where
-        A: IntoLuaMulti<'lua>,
-        R: FromLuaMulti<'lua>,
+        A: IntoLuaMulti,
+        R: FromLuaMulti,
     {
         let args = args.into_lua_multi(self.0.lua);
         AsyncThread {
@@ -338,14 +338,14 @@ impl<'lua> Thread<'lua> {
     }
 }
 
-impl<'lua> PartialEq for Thread<'lua> {
+impl PartialEq for Thread {
     fn eq(&self, other: &Self) -> bool {
         self.0 == other.0
     }
 }
 
 #[cfg(feature = "async")]
-impl<'lua, R> AsyncThread<'lua, R> {
+impl<R> AsyncThread<R> {
     #[inline]
     pub(crate) fn set_recyclable(&mut self, recyclable: bool) {
         self.recycle = recyclable;
@@ -358,7 +358,7 @@ impl<'lua, R> AsyncThread<'lua, R> {
     all(feature = "luajit", feature = "vendored"),
     feature = "luau",
 ))]
-impl<'lua, R> Drop for AsyncThread<'lua, R> {
+impl<R> Drop for AsyncThread<R> {
     fn drop(&mut self) {
         if self.recycle {
             unsafe {
@@ -377,9 +377,9 @@ impl<'lua, R> Drop for AsyncThread<'lua, R> {
 }
 
 #[cfg(feature = "async")]
-impl<'lua, R> Stream for AsyncThread<'lua, R>
+impl<R> Stream for AsyncThread<R>
 where
-    R: FromLuaMulti<'lua>,
+    R: FromLuaMulti,
 {
     type Item = Result<R>;
 
@@ -411,9 +411,9 @@ where
 }
 
 #[cfg(feature = "async")]
-impl<'lua, R> Future for AsyncThread<'lua, R>
+impl<R> Future for AsyncThread<R>
 where
-    R: FromLuaMulti<'lua>,
+    R: FromLuaMulti,
 {
     type Output = Result<R>;
 
@@ -461,16 +461,16 @@ fn is_poll_pending(val: &MultiValue) -> bool {
 }
 
 #[cfg(feature = "async")]
-struct WakerGuard<'lua, 'a> {
+struct WakerGuard<'a> {
     lua: &'lua Lua,
     prev: NonNull<Waker>,
     _phantom: PhantomData<&'a ()>,
 }
 
 #[cfg(feature = "async")]
-impl<'lua, 'a> WakerGuard<'lua, 'a> {
+impl<'a> WakerGuard<'a> {
     #[inline]
-    pub fn new(lua: &'lua Lua, waker: &'a Waker) -> Result<WakerGuard<'lua, 'a>> {
+    pub fn new(lua: &'lua Lua, waker: &'a Waker) -> Result<WakerGuard<'a>> {
         unsafe {
             let prev = lua.set_waker(NonNull::from(waker));
             Ok(WakerGuard {
@@ -483,7 +483,7 @@ impl<'lua, 'a> WakerGuard<'lua, 'a> {
 }
 
 #[cfg(feature = "async")]
-impl<'lua, 'a> Drop for WakerGuard<'lua, 'a> {
+impl<'a> Drop for WakerGuard<'a> {
     fn drop(&mut self) {
         unsafe {
             self.lua.set_waker(self.prev);

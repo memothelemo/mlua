@@ -241,6 +241,6 @@ pub(crate) mod private {
     impl Sealed for Error {}
     impl<T> Sealed for std::result::Result<T, Error> {}
     impl Sealed for Lua {}
-    impl Sealed for Table<'_> {}
-    impl Sealed for AnyUserData<'_> {}
+    impl Sealed for Table {}
+    impl Sealed for AnyUserData {}
 }

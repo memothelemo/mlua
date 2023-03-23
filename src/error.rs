@@ -13,6 +13,9 @@ use crate::private::Sealed;
 #[derive(Debug, Clone)]
 #[non_exhaustive]
 pub enum Error {
+    /// You're trying to access a value or do something with any
+    /// mlua structs but it is not belonged to their respective Lua instance.
+    InvalidLuaMachine,
     /// Syntax error while parsing Lua source code.
     SyntaxError {
         /// The error message as returned by Lua.
@@ -206,6 +209,7 @@ pub type Result<T> = StdResult<T, Error>;
 impl fmt::Display for Error {
     fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
         match *self {
+            Error::InvalidLuaMachine => write!(fmt, "invalid use in other Lua VM"),
             Error::SyntaxError { ref message, .. } => write!(fmt, "syntax error: {message}"),
             Error::RuntimeError(ref msg) => write!(fmt, "runtime error: {msg}"),
             Error::MemoryError(ref msg) => {

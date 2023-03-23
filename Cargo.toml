@@ -26,6 +26,7 @@ members = [
 ]
 
 [features]
+default = ["lua54"]
 lua54 = []
 lua53 = []
 lua52 = []

@@ -18,9 +18,9 @@ use crate::types::LuaRef;
 ///
 /// Unlike Rust strings, Lua strings may not be valid UTF-8.
 #[derive(Clone)]
-pub struct String<'lua>(pub(crate) LuaRef<'lua>);
+pub struct String(pub(crate) LuaRef);
 
-impl<'lua> String<'lua> {
+impl String {
     /// Get a `&str` slice if the Lua string is valid UTF-8.
     ///
     /// # Examples
@@ -124,7 +124,7 @@ impl<'lua> String<'lua> {
     }
 }
 
-impl<'lua> fmt::Debug for String<'lua> {
+impl fmt::Debug for String {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let bytes = self.as_bytes();
         // Check if the string is valid utf8
@@ -153,13 +153,13 @@ impl<'lua> fmt::Debug for String<'lua> {
     }
 }
 
-impl<'lua> AsRef<[u8]> for String<'lua> {
+impl AsRef<[u8]> for String {
     fn as_ref(&self) -> &[u8] {
         self.as_bytes()
     }
 }
 
-impl<'lua> Borrow<[u8]> for String<'lua> {
+impl Borrow<[u8]> for String {
     fn borrow(&self) -> &[u8] {
         self.as_bytes()
     }
@@ -173,7 +173,7 @@ impl<'lua> Borrow<[u8]> for String<'lua> {
 // The only downside is that this disallows a comparison with `Cow<str>`, as that only implements
 // `AsRef<str>`, which collides with this impl. Requiring `AsRef<str>` would fix that, but limit us
 // in other ways.
-impl<'lua, T> PartialEq<T> for String<'lua>
+impl<'lua, T> PartialEq<T> for String
 where
     T: AsRef<[u8]> + ?Sized,
 {
@@ -182,16 +182,16 @@ where
     }
 }
 
-impl<'lua> Eq for String<'lua> {}
+impl Eq for String {}
 
-impl<'lua> Hash for String<'lua> {
+impl Hash for String {
     fn hash<H: Hasher>(&self, state: &mut H) {
         self.as_bytes().hash(state);
     }
 }
 
 #[cfg(feature = "serialize")]
-impl<'lua> Serialize for String<'lua> {
+impl Serialize for String {
     fn serialize<S>(&self, serializer: S) -> StdResult<S::Ok, S::Error>
     where
         S: Serializer,

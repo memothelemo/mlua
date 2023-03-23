@@ -348,7 +348,7 @@ async fn test_async_userdata() -> Result<()> {
     struct MyUserData(Arc<AtomicU64>);
 
     impl UserData for MyUserData {
-        fn add_methods<'lua, M: UserDataMethods<'lua, Self>>(methods: &mut M) {
+        fn add_methods<M: UserDataMethods<Self>>(methods: &mut M) {
             methods.add_async_method("get_value", |_, data, ()| async move {
                 Delay::new(Duration::from_millis(10)).await;
                 Ok(data.0.load(Ordering::Relaxed))
@@ -449,7 +449,7 @@ async fn test_async_thread_error() -> Result<()> {
     struct MyUserData;
 
     impl UserData for MyUserData {
-        fn add_methods<'lua, M: UserDataMethods<'lua, Self>>(methods: &mut M) {
+        fn add_methods<M: UserDataMethods<Self>>(methods: &mut M) {
             methods.add_meta_method("__tostring", |_, _this, ()| Ok("myuserdata error"))
         }
     }

@@ -235,7 +235,7 @@ impl AsRef<str> for MetaMethod {
 /// Method registry for [`UserData`] implementors.
 ///
 /// [`UserData`]: crate::UserData
-pub trait UserDataMethods<'lua, T> {
+pub trait UserDataMethods<T> {
     /// Add a regular method which accepts a `&T` as the first parameter.
     ///
     /// Regular methods are implemented by overriding the `__index` metamethod and returning the
@@ -245,9 +245,9 @@ pub trait UserDataMethods<'lua, T> {
     /// be used as a fall-back if no regular method is found.
     fn add_method<M, A, R>(&mut self, name: impl AsRef<str>, method: M)
     where
-        M: Fn(&'lua Lua, &T, A) -> Result<R> + MaybeSend + 'static,
-        A: FromLuaMulti<'lua>,
-        R: IntoLuaMulti<'lua>;
+        M: Fn(Lua, &T, A) -> Result<R> + MaybeSend + 'static,
+        A: FromLuaMulti,
+        R: IntoLuaMulti;
 
     /// Add a regular method which accepts a `&mut T` as the first parameter.
     ///
@@ -256,9 +256,9 @@ pub trait UserDataMethods<'lua, T> {
     /// [`add_method`]: #method.add_method
     fn add_method_mut<M, A, R>(&mut self, name: impl AsRef<str>, method: M)
     where
-        M: FnMut(&'lua Lua, &mut T, A) -> Result<R> + MaybeSend + 'static,
-        A: FromLuaMulti<'lua>,
-        R: IntoLuaMulti<'lua>;
+        M: FnMut(Lua, &mut T, A) -> Result<R> + MaybeSend + 'static,
+        A: FromLuaMulti,
+        R: IntoLuaMulti;
 
     /// Add an async method which accepts a `T` as the first parameter and returns Future.
     /// The passed `T` is cloned from the original value.
@@ -273,10 +273,10 @@ pub trait UserDataMethods<'lua, T> {
     fn add_async_method<M, A, MR, R>(&mut self, name: impl AsRef<str>, method: M)
     where
         T: Clone,
-        M: Fn(&'lua Lua, T, A) -> MR + MaybeSend + 'static,
-        A: FromLuaMulti<'lua>,
+        M: Fn(Lua, T, A) -> MR + MaybeSend + 'static,
+        A: FromLuaMulti,
         MR: Future<Output = Result<R>> + 'lua,
-        R: IntoLuaMulti<'lua>;
+        R: IntoLuaMulti;
 
     /// Add a regular method as a function which accepts generic arguments, the first argument will
     /// be a [`AnyUserData`] of type `T` if the method is called with Lua method syntax:
@@ -290,9 +290,9 @@ pub trait UserDataMethods<'lua, T> {
     /// [`add_method_mut`]: #method.add_method_mut
     fn add_function<F, A, R>(&mut self, name: impl AsRef<str>, function: F)
     where
-        F: Fn(&'lua Lua, A) -> Result<R> + MaybeSend + 'static,
-        A: FromLuaMulti<'lua>,
-        R: IntoLuaMulti<'lua>;
+        F: Fn(Lua, A) -> Result<R> + MaybeSend + 'static,
+        A: FromLuaMulti,
+        R: IntoLuaMulti;
 
     /// Add a regular method as a mutable function which accepts generic arguments.
     ///
@@ -301,9 +301,9 @@ pub trait UserDataMethods<'lua, T> {
     /// [`add_function`]: #method.add_function
     fn add_function_mut<F, A, R>(&mut self, name: impl AsRef<str>, function: F)
     where
-        F: FnMut(&'lua Lua, A) -> Result<R> + MaybeSend + 'static,
-        A: FromLuaMulti<'lua>,
-        R: IntoLuaMulti<'lua>;
+        F: FnMut(Lua, A) -> Result<R> + MaybeSend + 'static,
+        A: FromLuaMulti,
+        R: IntoLuaMulti;
 
     /// Add a regular method as an async function which accepts generic arguments
     /// and returns Future.
@@ -317,10 +317,10 @@ pub trait UserDataMethods<'lua, T> {
     #[cfg_attr(docsrs, doc(cfg(feature = "async")))]
     fn add_async_function<F, A, FR, R>(&mut self, name: impl AsRef<str>, function: F)
     where
-        F: Fn(&'lua Lua, A) -> FR + MaybeSend + 'static,
-        A: FromLuaMulti<'lua>,
+        F: Fn(Lua, A) -> FR + MaybeSend + 'static,
+        A: FromLuaMulti,
         FR: Future<Output = Result<R>> + 'lua,
-        R: IntoLuaMulti<'lua>;
+        R: IntoLuaMulti;
 
     /// Add a metamethod which accepts a `&T` as the first parameter.
     ///
@@ -332,9 +332,9 @@ pub trait UserDataMethods<'lua, T> {
     /// [`add_meta_function`]: #method.add_meta_function
     fn add_meta_method<M, A, R>(&mut self, name: impl AsRef<str>, method: M)
     where
-        M: Fn(&'lua Lua, &T, A) -> Result<R> + MaybeSend + 'static,
-        A: FromLuaMulti<'lua>,
-        R: IntoLuaMulti<'lua>;
+        M: Fn(Lua, &T, A) -> Result<R> + MaybeSend + 'static,
+        A: FromLuaMulti,
+        R: IntoLuaMulti;
 
     /// Add a metamethod as a function which accepts a `&mut T` as the first parameter.
     ///
@@ -346,9 +346,9 @@ pub trait UserDataMethods<'lua, T> {
     /// [`add_meta_function`]: #method.add_meta_function
     fn add_meta_method_mut<M, A, R>(&mut self, name: impl AsRef<str>, method: M)
     where
-        M: FnMut(&'lua Lua, &mut T, A) -> Result<R> + MaybeSend + 'static,
-        A: FromLuaMulti<'lua>,
-        R: IntoLuaMulti<'lua>;
+        M: FnMut(Lua, &mut T, A) -> Result<R> + MaybeSend + 'static,
+        A: FromLuaMulti,
+        R: IntoLuaMulti;
 
     /// Add an async metamethod which accepts a `T` as the first parameter and returns Future.
     /// The passed `T` is cloned from the original value.
@@ -363,10 +363,10 @@ pub trait UserDataMethods<'lua, T> {
     fn add_async_meta_method<M, A, MR, R>(&mut self, name: impl AsRef<str>, method: M)
     where
         T: Clone,
-        M: Fn(&'lua Lua, T, A) -> MR + MaybeSend + 'static,
-        A: FromLuaMulti<'lua>,
+        M: Fn(Lua, T, A) -> MR + MaybeSend + 'static,
+        A: FromLuaMulti,
         MR: Future<Output = Result<R>> + 'lua,
-        R: IntoLuaMulti<'lua>;
+        R: IntoLuaMulti;
 
     /// Add a metamethod which accepts generic arguments.
     ///
@@ -375,9 +375,9 @@ pub trait UserDataMethods<'lua, T> {
     /// userdata of type `T`.
     fn add_meta_function<F, A, R>(&mut self, name: impl AsRef<str>, function: F)
     where
-        F: Fn(&'lua Lua, A) -> Result<R> + MaybeSend + 'static,
-        A: FromLuaMulti<'lua>,
-        R: IntoLuaMulti<'lua>;
+        F: Fn(Lua, A) -> Result<R> + MaybeSend + 'static,
+        A: FromLuaMulti,
+        R: IntoLuaMulti;
 
     /// Add a metamethod as a mutable function which accepts generic arguments.
     ///
@@ -386,9 +386,9 @@ pub trait UserDataMethods<'lua, T> {
     /// [`add_meta_function`]: #method.add_meta_function
     fn add_meta_function_mut<F, A, R>(&mut self, name: impl AsRef<str>, function: F)
     where
-        F: FnMut(&'lua Lua, A) -> Result<R> + MaybeSend + 'static,
-        A: FromLuaMulti<'lua>,
-        R: IntoLuaMulti<'lua>;
+        F: FnMut(Lua, A) -> Result<R> + MaybeSend + 'static,
+        A: FromLuaMulti,
+        R: IntoLuaMulti;
 
     /// Add a metamethod which accepts generic arguments and returns Future.
     ///
@@ -401,34 +401,34 @@ pub trait UserDataMethods<'lua, T> {
     #[cfg_attr(docsrs, doc(cfg(feature = "async")))]
     fn add_async_meta_function<F, A, FR, R>(&mut self, name: impl AsRef<str>, function: F)
     where
-        F: Fn(&'lua Lua, A) -> FR + MaybeSend + 'static,
-        A: FromLuaMulti<'lua>,
+        F: Fn(Lua, A) -> FR + MaybeSend + 'static,
+        A: FromLuaMulti,
         FR: Future<Output = Result<R>> + 'lua,
-        R: IntoLuaMulti<'lua>;
+        R: IntoLuaMulti;
 
     //
     // Below are internal methods used in generated code
     //
 
     #[doc(hidden)]
-    fn add_callback(&mut self, _name: String, _callback: Callback<'lua, 'static>) {}
+    fn add_callback(&mut self, _name: String, _callback: Callback<'static>) {}
 
     #[doc(hidden)]
     #[cfg(feature = "async")]
-    fn add_async_callback(&mut self, _name: String, _callback: AsyncCallback<'lua, 'static>) {}
+    fn add_async_callback(&mut self, _name: String, _callback: AsyncCallback<'static>) {}
 
     #[doc(hidden)]
-    fn add_meta_callback(&mut self, _name: String, _callback: Callback<'lua, 'static>) {}
+    fn add_meta_callback(&mut self, _name: String, _callback: Callback<'static>) {}
 
     #[doc(hidden)]
     #[cfg(feature = "async")]
-    fn add_async_meta_callback(&mut self, _name: String, _callback: AsyncCallback<'lua, 'static>) {}
+    fn add_async_meta_callback(&mut self, _name: String, _callback: AsyncCallback<'static>) {}
 }
 
 /// Field registry for [`UserData`] implementors.
 ///
 /// [`UserData`]: crate::UserData
-pub trait UserDataFields<'lua, T> {
+pub trait UserDataFields<T> {
     /// Add a regular field getter as a method which accepts a `&T` as the parameter.
     ///
     /// Regular field getters are implemented by overriding the `__index` metamethod and returning the
@@ -438,8 +438,8 @@ pub trait UserDataFields<'lua, T> {
     /// be used as a fall-back if no regular field or method are found.
     fn add_field_method_get<M, R>(&mut self, name: impl AsRef<str>, method: M)
     where
-        M: Fn(&'lua Lua, &T) -> Result<R> + MaybeSend + 'static,
-        R: IntoLua<'lua>;
+        M: Fn(Lua, &T) -> Result<R> + MaybeSend + 'static,
+        R: IntoLua;
 
     /// Add a regular field setter as a method which accepts a `&mut T` as the first parameter.
     ///
@@ -450,8 +450,8 @@ pub trait UserDataFields<'lua, T> {
     /// be used as a fall-back if no regular field is found.
     fn add_field_method_set<M, A>(&mut self, name: impl AsRef<str>, method: M)
     where
-        M: FnMut(&'lua Lua, &mut T, A) -> Result<()> + MaybeSend + 'static,
-        A: FromLua<'lua>;
+        M: FnMut(Lua, &mut T, A) -> Result<()> + MaybeSend + 'static,
+        A: FromLua;
 
     /// Add a regular field getter as a function which accepts a generic [`AnyUserData`] of type `T`
     /// argument.
@@ -462,8 +462,8 @@ pub trait UserDataFields<'lua, T> {
     /// [`add_field_method_get`]: #method.add_field_method_get
     fn add_field_function_get<F, R>(&mut self, name: impl AsRef<str>, function: F)
     where
-        F: Fn(&'lua Lua, AnyUserData<'lua>) -> Result<R> + MaybeSend + 'static,
-        R: IntoLua<'lua>;
+        F: Fn(Lua, AnyUserData) -> Result<R> + MaybeSend + 'static,
+        R: IntoLua;
 
     /// Add a regular field setter as a function which accepts a generic [`AnyUserData`] of type `T`
     /// first argument.
@@ -474,8 +474,8 @@ pub trait UserDataFields<'lua, T> {
     /// [`add_field_method_set`]: #method.add_field_method_set
     fn add_field_function_set<F, A>(&mut self, name: impl AsRef<str>, function: F)
     where
-        F: FnMut(&'lua Lua, AnyUserData<'lua>, A) -> Result<()> + MaybeSend + 'static,
-        A: FromLua<'lua>;
+        F: FnMut(Lua, AnyUserData, A) -> Result<()> + MaybeSend + 'static,
+        A: FromLua;
 
     /// Add a metamethod value computed from `f`.
     ///
@@ -487,18 +487,18 @@ pub trait UserDataFields<'lua, T> {
     /// like `__gc` or `__metatable`.
     fn add_meta_field_with<F, R>(&mut self, name: impl AsRef<str>, f: F)
     where
-        F: Fn(&'lua Lua) -> Result<R> + MaybeSend + 'static,
-        R: IntoLua<'lua>;
+        F: Fn(Lua) -> Result<R> + MaybeSend + 'static,
+        R: IntoLua;
 
     //
     // Below are internal methods used in generated code
     //
 
     #[doc(hidden)]
-    fn add_field_getter(&mut self, _name: String, _callback: Callback<'lua, 'static>) {}
+    fn add_field_getter(&mut self, _name: String, _callback: Callback<'static>) {}
 
     #[doc(hidden)]
-    fn add_field_setter(&mut self, _name: String, _callback: Callback<'lua, 'static>) {}
+    fn add_field_setter(&mut self, _name: String, _callback: Callback<'static>) {}
 }
 
 /// Trait for custom userdata types.
@@ -536,11 +536,11 @@ pub trait UserDataFields<'lua, T> {
 /// struct MyUserData(i32);
 ///
 /// impl UserData for MyUserData {
-///     fn add_fields<'lua, F: UserDataFields<'lua, Self>>(fields: &mut F) {
+///     fn add_fields<F: UserDataFields<Self>>(fields: &mut F) {
 ///         fields.add_field_method_get("val", |_, this| Ok(this.0));
 ///     }
 ///
-///     fn add_methods<'lua, M: UserDataMethods<'lua, Self>>(methods: &mut M) {
+///     fn add_methods<M: UserDataMethods<Self>>(methods: &mut M) {
 ///         methods.add_method_mut("add", |_, this, value: i32| {
 ///             this.0 += value;
 ///             Ok(())
@@ -571,11 +571,11 @@ pub trait UserDataFields<'lua, T> {
 pub trait UserData: Sized {
     /// Adds custom fields specific to this userdata.
     #[allow(unused_variables)]
-    fn add_fields<'lua, F: UserDataFields<'lua, Self>>(fields: &mut F) {}
+    fn add_fields<F: UserDataFields<Self>>(fields: &mut F) {}
 
     /// Adds custom methods and operators specific to this userdata.
     #[allow(unused_variables)]
-    fn add_methods<'lua, M: UserDataMethods<'lua, Self>>(methods: &mut M) {}
+    fn add_methods<M: UserDataMethods<Self>>(methods: &mut M) {}
 }
 
 // Wraps UserData in a way to always implement `serde::Serialize` trait.
@@ -738,7 +738,7 @@ impl Serialize for UserDataSerializeError {
 /// [`is`]: crate::AnyUserData::is
 /// [`borrow`]: crate::AnyUserData::borrow
 #[derive(Clone, Debug)]
-pub struct AnyUserData<'lua>(pub(crate) LuaRef<'lua>);
+pub struct AnyUserData(pub(crate) LuaRef);
 
 #[cfg(feature = "unstable")]
 #[cfg_attr(docsrs, doc(cfg(feature = "unstable")))]
@@ -752,7 +752,7 @@ impl OwnedAnyUserData {
     }
 }
 
-impl<'lua> AnyUserData<'lua> {
+impl AnyUserData {
     /// Checks whether the type of this userdata is `T`.
     pub fn is<T: 'static>(&self) -> bool {
         match self.inspect(|_: &UserDataCell<T>| Ok(())) {
@@ -789,7 +789,7 @@ impl<'lua> AnyUserData<'lua> {
     ///
     /// Keeps associated user values unchanged (they will be collected by Lua's GC).
     pub fn take<T: 'static>(&self) -> Result<T> {
-        let lua = self.0.lua;
+        let lua = self.0.lua.clone();
         let state = lua.state();
         unsafe {
             let _sg = StackGuard::new(state);
@@ -816,7 +816,7 @@ impl<'lua> AnyUserData<'lua> {
     /// [`get_user_value`]: #method.get_user_value
     /// [`set_nth_user_value`]: #method.set_nth_user_value
     #[inline]
-    pub fn set_user_value<V: IntoLua<'lua>>(&self, v: V) -> Result<()> {
+    pub fn set_user_value<V: IntoLua>(&self, v: V) -> Result<()> {
         self.set_nth_user_value(1, v)
     }
 
@@ -827,7 +827,7 @@ impl<'lua> AnyUserData<'lua> {
     /// [`set_user_value`]: #method.set_user_value
     /// [`get_nth_user_value`]: #method.get_nth_user_value
     #[inline]
-    pub fn get_user_value<V: FromLua<'lua>>(&self) -> Result<V> {
+    pub fn get_user_value<V: FromLua>(&self) -> Result<V> {
         self.get_nth_user_value(1)
     }
 
@@ -841,21 +841,21 @@ impl<'lua> AnyUserData<'lua> {
     /// For other Lua versions this functionality is provided using a wrapping table.
     ///
     /// [`get_nth_user_value`]: #method.get_nth_user_value
-    pub fn set_nth_user_value<V: IntoLua<'lua>>(&self, n: usize, v: V) -> Result<()> {
+    pub fn set_nth_user_value<V: IntoLua>(&self, n: usize, v: V) -> Result<()> {
         if n < 1 || n > u16::MAX as usize {
             return Err(Error::RuntimeError(
                 "user value index out of bounds".to_string(),
             ));
         }
 
-        let lua = self.0.lua;
+        let lua = self.0.lua.clone();
         let state = lua.state();
         unsafe {
             let _sg = StackGuard::new(state);
             check_stack(state, 5)?;
 
             lua.push_userdata_ref(&self.0)?;
-            lua.push_value(v.into_lua(lua)?)?;
+            lua.push_value(v.into_lua(&lua)?)?;
 
             #[cfg(feature = "lua54")]
             if n < USER_VALUE_MAXSLOT {
@@ -896,14 +896,14 @@ impl<'lua> AnyUserData<'lua> {
     /// For other Lua versions this functionality is provided using a wrapping table.
     ///
     /// [`set_nth_user_value`]: #method.set_nth_user_value
-    pub fn get_nth_user_value<V: FromLua<'lua>>(&self, n: usize) -> Result<V> {
+    pub fn get_nth_user_value<V: FromLua>(&self, n: usize) -> Result<V> {
         if n < 1 || n > u16::MAX as usize {
             return Err(Error::RuntimeError(
                 "user value index out of bounds".to_string(),
             ));
         }
 
-        let lua = self.0.lua;
+        let lua = self.0.lua.clone();
         let state = lua.state();
         unsafe {
             let _sg = StackGuard::new(state);
@@ -914,7 +914,7 @@ impl<'lua> AnyUserData<'lua> {
             #[cfg(feature = "lua54")]
             if n < USER_VALUE_MAXSLOT {
                 ffi::lua_getiuservalue(state, -1, n as c_int);
-                return V::from_lua(lua.pop_value(), lua);
+                return V::from_lua(lua.pop_value(), &lua);
             }
 
             // Multiple (extra) user values are emulated by storing them in a table
@@ -929,7 +929,7 @@ impl<'lua> AnyUserData<'lua> {
                 ffi::lua_rawgeti(state, -1, n as ffi::lua_Integer);
             })?;
 
-            V::from_lua(lua.pop_value(), lua)
+            V::from_lua(lua.pop_value(), &lua)
         }
     }
 
@@ -940,9 +940,9 @@ impl<'lua> AnyUserData<'lua> {
     /// [`get_named_user_value`]: #method.get_named_user_value
     pub fn set_named_user_value<V>(&self, name: impl AsRef<str>, v: V) -> Result<()>
     where
-        V: IntoLua<'lua>,
+        V: IntoLua,
     {
-        let lua = self.0.lua;
+        let lua = self.0.lua.clone();
         let state = lua.state();
         let name = name.as_ref();
         unsafe {
@@ -950,7 +950,7 @@ impl<'lua> AnyUserData<'lua> {
             check_stack(state, 5)?;
 
             lua.push_userdata_ref(&self.0)?;
-            lua.push_value(v.into_lua(lua)?)?;
+            lua.push_value(v.into_lua(&lua)?)?;
 
             // Multiple (extra) user values are emulated by storing them in a table
             protect_lua!(state, 2, 0, |state| {
@@ -979,9 +979,9 @@ impl<'lua> AnyUserData<'lua> {
     /// [`set_named_user_value`]: #method.set_named_user_value
     pub fn get_named_user_value<V>(&self, name: impl AsRef<str>) -> Result<V>
     where
-        V: FromLua<'lua>,
+        V: FromLua,
     {
-        let lua = self.0.lua;
+        let lua = self.0.lua.clone();
         let state = lua.state();
         let name = name.as_ref();
         unsafe {
@@ -1000,7 +1000,7 @@ impl<'lua> AnyUserData<'lua> {
                 ffi::lua_rawget(state, -2);
             })?;
 
-            V::from_lua(lua.pop_value(), lua)
+            V::from_lua(lua.pop_value(), &lua)
         }
     }
 
@@ -1013,12 +1013,12 @@ impl<'lua> AnyUserData<'lua> {
     ///
     /// [`UserDataMetatable`]: crate::UserDataMetatable
     #[inline]
-    pub fn get_metatable(&self) -> Result<UserDataMetatable<'lua>> {
+    pub fn get_metatable(&self) -> Result<UserDataMetatable> {
         self.get_raw_metatable().map(UserDataMetatable)
     }
 
-    fn get_raw_metatable(&self) -> Result<Table<'lua>> {
-        let lua = self.0.lua;
+    fn get_raw_metatable(&self) -> Result<Table> {
+        let lua = self.0.lua.clone();
         let state = lua.state();
         unsafe {
             let _sg = StackGuard::new(state);
@@ -1061,7 +1061,7 @@ impl<'lua> AnyUserData<'lua> {
     /// Returns true if this `AnyUserData` is serializable (eg. was created using `create_ser_userdata`).
     #[cfg(feature = "serialize")]
     pub(crate) fn is_serializable(&self) -> bool {
-        let lua = self.0.lua;
+        let lua = self.0.lua.clone();
         let state = lua.state();
         let is_serializable = || unsafe {
             let _sg = StackGuard::new(state);
@@ -1084,7 +1084,7 @@ impl<'lua> AnyUserData<'lua> {
         T: 'static,
         F: FnOnce(&'a UserDataCell<T>) -> Result<R>,
     {
-        let lua = self.0.lua;
+        let lua = self.0.lua.clone();
         let state = lua.state();
         unsafe {
             let _sg = StackGuard::new(state);
@@ -1101,13 +1101,13 @@ impl<'lua> AnyUserData<'lua> {
     }
 }
 
-impl<'lua> PartialEq for AnyUserData<'lua> {
+impl PartialEq for AnyUserData {
     fn eq(&self, other: &Self) -> bool {
         self.0 == other.0
     }
 }
 
-impl<'lua> AsRef<AnyUserData<'lua>> for AnyUserData<'lua> {
+impl AsRef<AnyUserData> for AnyUserData {
     #[inline]
     fn as_ref(&self) -> &Self {
         self
@@ -1123,14 +1123,14 @@ unsafe fn getuservalue_table(state: *mut ffi::lua_State, idx: c_int) -> c_int {
 
 /// Handle to a `UserData` metatable.
 #[derive(Clone, Debug)]
-pub struct UserDataMetatable<'lua>(pub(crate) Table<'lua>);
+pub struct UserDataMetatable(pub(crate) Table);
 
-impl<'lua> UserDataMetatable<'lua> {
+impl UserDataMetatable {
     /// Gets the value associated to `key` from the metatable.
     ///
     /// If no value is associated to `key`, returns the `Nil` value.
     /// Access to restricted metamethods such as `__gc` or `__metatable` will cause an error.
-    pub fn get<V: FromLua<'lua>>(&self, key: impl AsRef<str>) -> Result<V> {
+    pub fn get<V: FromLua>(&self, key: impl AsRef<str>) -> Result<V> {
         self.0.raw_get(MetaMethod::validate(key.as_ref())?)
     }
 
@@ -1140,7 +1140,7 @@ impl<'lua> UserDataMetatable<'lua> {
     /// Access to restricted metamethods such as `__gc` or `__metatable` will cause an error.
     /// Setting `__index` or `__newindex` metamethods is also restricted because their values are cached
     /// for `mlua` internal usage.
-    pub fn set<V: IntoLua<'lua>>(&self, key: impl AsRef<str>, value: V) -> Result<()> {
+    pub fn set<V: IntoLua>(&self, key: impl AsRef<str>, value: V) -> Result<()> {
         let key = MetaMethod::validate(key.as_ref())?;
         // `__index` and `__newindex` cannot be changed in runtime, because values are cached
         if key == MetaMethod::Index || key == MetaMethod::NewIndex {
@@ -1159,7 +1159,7 @@ impl<'lua> UserDataMetatable<'lua> {
     /// The pairs are wrapped in a [`Result`], since they are lazily converted to `V` type.
     ///
     /// [`Result`]: crate::Result
-    pub fn pairs<V: FromLua<'lua>>(self) -> UserDataMetatablePairs<'lua, V> {
+    pub fn pairs<V: FromLua>(self) -> UserDataMetatablePairs<V> {
         UserDataMetatablePairs(self.0.pairs())
     }
 }
@@ -1172,11 +1172,11 @@ impl<'lua> UserDataMetatable<'lua> {
 ///
 /// [`UserData`]: crate::UserData
 /// [`UserDataMetatable::pairs`]: crate::UserDataMetatable::method.pairs
-pub struct UserDataMetatablePairs<'lua, V>(TablePairs<'lua, StdString, V>);
+pub struct UserDataMetatablePairs<V>(TablePairs<StdString, V>);
 
-impl<'lua, V> Iterator for UserDataMetatablePairs<'lua, V>
+impl<V> Iterator for UserDataMetatablePairs<V>
 where
-    V: FromLua<'lua>,
+    V: FromLua,
 {
     type Item = Result<(String, V)>;
 
@@ -1196,12 +1196,12 @@ where
 }
 
 #[cfg(feature = "serialize")]
-impl<'lua> Serialize for AnyUserData<'lua> {
+impl Serialize for AnyUserData {
     fn serialize<S>(&self, serializer: S) -> StdResult<S::Ok, S::Error>
     where
         S: Serializer,
     {
-        let lua = self.0.lua;
+        let lua = self.0.lua.clone();
         let state = lua.state();
         let data = unsafe {
             let _sg = StackGuard::new(state);
@@ -1222,9 +1222,9 @@ impl<'lua> Serialize for AnyUserData<'lua> {
 /// A wrapper type for an immutably borrowed value from a `AnyUserData`.
 ///
 /// It implements [`FromLua`] and can be used to receive a typed userdata from Lua.
-pub struct UserDataRef<'lua, T: 'static>(AnyUserData<'lua>, Ref<'lua, T>);
+pub struct UserDataRef<'a, T: 'static>(AnyUserData, Ref<'a, T>);
 
-impl<'lua, T: 'static> Deref for UserDataRef<'lua, T> {
+impl<'a, T: 'static> Deref for UserDataRef<'a, T> {
     type Target = T;
 
     fn deref(&self) -> &Self::Target {
@@ -1232,8 +1232,8 @@ impl<'lua, T: 'static> Deref for UserDataRef<'lua, T> {
     }
 }
 
-impl<'lua, T: 'static> UserDataRef<'lua, T> {
-    pub(crate) fn from_value(value: Value<'lua>) -> Result<Self> {
+impl<'a, T: 'static> UserDataRef<'a, T> {
+    pub(crate) fn from_value(value: Value) -> Result<Self> {
         let ud = try_value_to_userdata::<T>(value)?;
         // It's safe to lift lifetime of `Ref<T>` to `'lua` as long as we hold AnyUserData to it.
         let this = unsafe { mem::transmute(ud.borrow::<T>()?) };
@@ -1244,9 +1244,9 @@ impl<'lua, T: 'static> UserDataRef<'lua, T> {
 /// A wrapper type for a mutably borrowed value from a `AnyUserData`.
 ///
 /// It implements [`FromLua`] and can be used to receive a typed userdata from Lua.
-pub struct UserDataRefMut<'lua, T: 'static>(AnyUserData<'lua>, RefMut<'lua, T>);
+pub struct UserDataRefMut<'a, T: 'static>(AnyUserData, RefMut<'a, T>);
 
-impl<'lua, T: 'static> Deref for UserDataRefMut<'lua, T> {
+impl<'a, T: 'static> Deref for UserDataRefMut<'a, T> {
     type Target = T;
 
     fn deref(&self) -> &Self::Target {
@@ -1254,14 +1254,14 @@ impl<'lua, T: 'static> Deref for UserDataRefMut<'lua, T> {
     }
 }
 
-impl<'lua, T: 'static> DerefMut for UserDataRefMut<'lua, T> {
+impl<'a, T: 'static> DerefMut for UserDataRefMut<'a, T> {
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.1
     }
 }
 
-impl<'lua, T: 'static> UserDataRefMut<'lua, T> {
-    pub(crate) fn from_value(value: Value<'lua>) -> Result<Self> {
+impl<'a, T: 'static> UserDataRefMut<'a, T> {
+    pub(crate) fn from_value(value: Value) -> Result<Self> {
         let ud = try_value_to_userdata::<T>(value)?;
         // It's safe to lift lifetime of `RefMut<T>` to `'lua` as long as we hold AnyUserData to it.
         let this = unsafe { mem::transmute(ud.borrow_mut::<T>()?) };
